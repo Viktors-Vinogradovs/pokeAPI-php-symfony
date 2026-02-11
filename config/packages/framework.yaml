@@ -8,6 +8,12 @@ framework:
     #esi: true
     #fragments: true
 
+    # HTTP Client configuration
+    http_client:
+        default_options:
+            timeout: 10
+            max_redirects: 3
+
 when@test:
     framework:
         test: true

@@ -1,0 +1,4 @@
+dev_controllers:
+    resource: ../../../src/Controller/DevController.php
+    type: attribute
+    prefix: /dev
