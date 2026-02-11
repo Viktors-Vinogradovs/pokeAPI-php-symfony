@@ -1,0 +1,211 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pokemon List - Pokemon Finder{% endblock %}
+
+{% block body %}
+<div class="container">
+    <header class="page-header">
+        <h1>Pokemon Finder</h1>
+        <p class="subtitle">Browse, search, and filter Pokemon</p>
+    </header>
+
+    <main>
+        {% if error is defined and error %}
+            <div class="error-message">
+                <h2>⚠️ Error</h2>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            {# Search and Filter Section #}
+            <section class="filters-section">
+                {# Search Form #}
+                <form method="get" action="{{ path('app_pokemon_list') }}" class="search-form">
+                    <div class="search-input-group">
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ searchTerm }}"
+                            placeholder="Search by name..."
+                            class="search-input"
+                            maxlength="50"
+                        >
+                        <button type="submit" class="search-button">Search</button>
+                    </div>
+
+                    {# Preserve selected types in search #}
+                    {% for type in selectedTypes %}
+                        <input type="hidden" name="types[]" value="{{ type }}">
+                    {% endfor %}
+                </form>
+
+                {# Type Filter Form #}
+                <form method="get" action="{{ path('app_pokemon_list') }}" class="filter-form">
+                    <div class="filter-header">
+                        <h3>Filter by Type:</h3>
+                    </div>
+
+                    <div class="type-checkboxes">
+                        {% for type in allTypes %}
+                            <label class="type-checkbox">
+                                <input
+                                    type="checkbox"
+                                    name="types[]"
+                                    value="{{ type }}"
+                                    {% if type in selectedTypes %}checked{% endif %}
+                                >
+                                <span class="type-label">{{ type|capitalize }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                    {# Preserve search term in filter #}
+                    {% if searchTerm %}
+                        <input type="hidden" name="q" value="{{ searchTerm }}">
+                    {% endif %}
+
+                    <div class="filter-actions">
+                        <button type="submit" class="filter-button">Apply Filters</button>
+                        {% if selectedTypes|length > 0 or searchTerm %}
+                            <a href="{{ path('app_pokemon_list') }}" class="clear-filters">Clear All</a>
+                        {% endif %}
+                    </div>
+                </form>
+
+                {# Active Filters Display #}
+                {% if selectedTypes|length > 0 or searchTerm %}
+                    <div class="active-filters">
+                        <strong>Active Filters:</strong>
+                        {% if searchTerm %}
+                            <span class="filter-pill">Search: "{{ searchTerm }}"</span>
+                        {% endif %}
+                        {% for type in selectedTypes %}
+                            <span class="filter-pill">Type: {{ type|capitalize }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+
+            {# Results Section #}
+            <section class="results-section">
+                {% if hasResults %}
+                    <div class="results-summary">
+                        <p>
+                            Showing {{ ((page - 1) * perPage) + 1 }}–{{ min(page * perPage, totalCount) }}
+                            of {{ totalCount }} Pokemon
+                        </p>
+                    </div>
+
+                    {# Pokemon Grid #}
+                    <div class="pokemon-grid">
+                        {% for pokemon in pokemonList %}
+                            <a href="{{ path('app_pokemon_list') }}?q={{ pokemon.name }}" class="pokemon-card">
+                                {% if pokemon.sprite %}
+                                    <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" class="pokemon-sprite">
+                                {% else %}
+                                    <div class="pokemon-sprite-placeholder">No Image</div>
+                                {% endif %}
+
+                                <h3 class="pokemon-name">{{ pokemon.name|capitalize }}</h3>
+                                <p class="pokemon-id">#{{ pokemon.id }}</p>
+
+                                <div class="pokemon-types">
+                                    {% for type in pokemon.types %}
+                                        <span class="type-badge type-{{ type }}">{{ type }}</span>
+                                    {% endfor %}
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+
+                    {# Pagination #}
+                    {% if totalPages > 1 %}
+                        <nav class="pagination">
+                            {# Previous Button #}
+                            {% if page > 1 %}
+                                <a href="{{ path('app_pokemon_list', {
+                                    'q': searchTerm,
+                                    'types': selectedTypes,
+                                    'page': page - 1
+                                }) }}" class="pagination-btn">
+                                    « Previous
+                                </a>
+                            {% else %}
+                                <span class="pagination-btn disabled">« Previous</span>
+                            {% endif %}
+
+                            {# Page Numbers #}
+                            {% set startPage = max(1, page - 2) %}
+                            {% set endPage = min(totalPages, page + 2) %}
+
+                            {% if startPage > 1 %}
+                                <a href="{{ path('app_pokemon_list', {
+                                    'q': searchTerm,
+                                    'types': selectedTypes,
+                                    'page': 1
+                                }) }}" class="pagination-number">1</a>
+
+                                {% if startPage > 2 %}
+                                    <span class="pagination-ellipsis">...</span>
+                                {% endif %}
+                            {% endif %}
+
+                            {% for pageNum in startPage..endPage %}
+                                {% if pageNum == page %}
+                                    <span class="pagination-number active">{{ pageNum }}</span>
+                                {% else %}
+                                    <a href="{{ path('app_pokemon_list', {
+                                        'q': searchTerm,
+                                        'types': selectedTypes,
+                                        'page': pageNum
+                                    }) }}" class="pagination-number">{{ pageNum }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if endPage < totalPages %}
+                                {% if endPage < totalPages - 1 %}
+                                    <span class="pagination-ellipsis">...</span>
+                                {% endif %}
+
+                                <a href="{{ path('app_pokemon_list', {
+                                    'q': searchTerm,
+                                    'types': selectedTypes,
+                                    'page': totalPages
+                                }) }}" class="pagination-number">{{ totalPages }}</a>
+                            {% endif %}
+
+                            {# Next Button #}
+                            {% if page < totalPages %}
+                                <a href="{{ path('app_pokemon_list', {
+                                    'q': searchTerm,
+                                    'types': selectedTypes,
+                                    'page': page + 1
+                                }) }}" class="pagination-btn">
+                                    Next »
+                                </a>
+                            {% else %}
+                                <span class="pagination-btn disabled">Next »</span>
+                            {% endif %}
+                        </nav>
+                    {% endif %}
+
+                {% else %}
+                    {# Empty State #}
+                    <div class="empty-state">
+                        <h2>🔍 No Pokemon Found</h2>
+                        <p>No Pokemon matching your search criteria.</p>
+                        {% if selectedTypes|length > 0 or searchTerm %}
+                            <p>Try:</p>
+                            <ul>
+                                <li>Removing some type filters</li>
+                                <li>Using a different search term</li>
+                                <li>Clearing all filters</li>
+                            </ul>
+                            <a href="{{ path('app_pokemon_list') }}" class="button-primary">Clear All Filters</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

@@ -10,7 +10,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class DevController extends AbstractController
 {
-    #[Route('/dev/poke-test', name: 'app_dev_poke_test')]
+    // Route disabled after Sprint 1 - list page implemented
+    // #[Route('/dev/poke-test', name: 'app_dev_poke_test')]
     public function pokeTest(PokeApiClient $pokeApiClient): Response
     {
         $startTime = microtime(true);
