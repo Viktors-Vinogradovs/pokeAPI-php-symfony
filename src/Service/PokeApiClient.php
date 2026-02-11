@@ -41,6 +41,30 @@ class PokeApiClient
     }
 
     /**
+     * Get paginated Pokemon list from API index
+     *
+     * @param int $limit Number of results per page
+     * @param int $offset Starting offset for pagination
+     * @return array ['count' => int, 'results' => array<string>]
+     * @throws PokeApiException
+     */
+    public function getPokemonPage(int $limit = 20, int $offset = 0): array
+    {
+        try {
+            $cacheKey = sprintf('poke.pokemon.page.%d.%d', $limit, $offset);
+
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($limit, $offset) {
+                $item->expiresAfter(self::CACHE_TTL);
+
+                $response = $this->request("/pokemon?limit={$limit}&offset={$offset}");
+                return $this->normalizePokemonPage($response);
+            });
+        } catch (InvalidArgumentException $e) {
+            throw new PokeApiException('Cache error: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
      * Get list of Pokemon names for a specific type
      *
      * @param string $type Type name (e.g., 'fire', 'water')
@@ -148,6 +172,30 @@ class PokeApiClient
             fn(array $item) => $item['name'],
             $response['results']
         );
+    }
+
+    /**
+     * Normalize paginated Pokemon list response
+     *
+     * @param array $response Raw API response from /pokemon endpoint
+     * @return array ['count' => int, 'results' => array<string>]
+     */
+    private function normalizePokemonPage(array $response): array
+    {
+        $count = $response['count'] ?? 0;
+        $results = [];
+
+        if (isset($response['results']) && is_array($response['results'])) {
+            $results = array_map(
+                fn(array $item) => $item['name'],
+                $response['results']
+            );
+        }
+
+        return [
+            'count' => $count,
+            'results' => $results,
+        ];
     }
 
     /**
