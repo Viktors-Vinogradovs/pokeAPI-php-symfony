@@ -14,11 +14,11 @@
     <body>
         <nav class="navbar">
             <div class="navbar-inner">
-                <a href="{{ path('app_home') }}" class="navbar-brand">Pokemon Finder</a>
+                <a href="{{ path('app_home') }}" class="navbar-brand">Pokémonu meklētājs</a>
                 <div class="navbar-links">
-                    <a href="{{ path('app_home') }}" class="nav-link">Home</a>
-                    <a href="{{ path('app_pokemon_list') }}" class="nav-link">Pokemon</a>
-                    <a href="{{ path('app_favorites_index') }}" class="nav-link">Favorites{% if favoritesCount is defined and favoritesCount > 0 %} ({{ favoritesCount }}){% endif %}</a>
+                    <a href="{{ path('app_home') }}" class="nav-link">Sākums</a>
+                    <a href="{{ path('app_pokemon_list') }}" class="nav-link">Pokémoni</a>
+                    <a href="{{ path('app_favorites_index') }}" class="nav-link">Favorīti{% if favoritesCount is defined and favoritesCount > 0 %} ({{ favoritesCount }}){% endif %}</a>
                 </div>
             </div>
         </nav>
