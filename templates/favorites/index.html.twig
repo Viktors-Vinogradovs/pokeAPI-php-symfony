@@ -1,16 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}My Favorites - Pokemon Finder{% endblock %}
+{% block title %}Mani favorīti - Pokémonu meklētājs{% endblock %}
 
 {% block body %}
 <div class="container">
     <header class="page-header">
-        <h1>My Favorites</h1>
+        <h1>Mani favorīti</h1>
         <p class="subtitle">
             {% if pokemonList|length > 0 %}
-                {{ pokemonList|length }} Pokemon saved
+                {{ pokemonList|length }} saglabātie Pokémoni
             {% else %}
-                No favorites yet
+                Vēl nav favorītu
             {% endif %}
         </p>
     </header>
@@ -24,10 +24,10 @@
             </div>
         {% else %}
             <div class="empty-state">
-                <h2>☆ No Favorites Yet</h2>
-                <p>You haven't added any Pokemon to your favorites.</p>
-                <p>Browse the Pokemon list and click the star to add favorites!</p>
-                <a href="{{ path('app_pokemon_list') }}" class="button-primary">Browse Pokemon</a>
+                <h2>☆ Vēl nav favorītu</h2>
+                <p>Tu vēl neesi pievienojis neviens Pokémon saviem favorītiem.</p>
+                <p>Pārlūko Pokémonu sarakstu un noklikšķini uz zvaigznes, lai pievienotu favorītus!</p>
+                <a href="{{ path('app_pokemon_list') }}" class="button-primary">Pārlūkot Pokémonus</a>
             </div>
         {% endif %}
     </main>

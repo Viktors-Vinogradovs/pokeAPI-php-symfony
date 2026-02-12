@@ -1,34 +1,26 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Pokemon Finder - Home{% endblock %}
+{% block title %}Pokémonu meklētājs - Sākums{% endblock %}
 
 {% block body %}
 <div class="container">
     <header>
-        <h1>Pokemon Finder</h1>
-        <p class="subtitle">Discover and explore Pokemon using the PokeAPI</p>
+        <h1>Pokémonu meklētājs</h1>
+        <p class="subtitle">Atrodi un saglabā savus mīļākos Pokémonus</p>
     </header>
 
     <main>
-        <div class="welcome-card">
-            <h2>Welcome to Pokemon Finder!</h2>
-            <p>This application will help you browse, search, and manage your favorite Pokemon.</p>
-
-            <div class="features">
-                <h3>Planned Features:</h3>
-                <ul>
-                    <li>Browse Pokemon list with pagination</li>
-                    <li>Search Pokemon by name</li>
-                    <li>Filter by type(s)</li>
-                    <li>View detailed Pokemon information</li>
-                    <li>Save your favorite Pokemon</li>
-                </ul>
-            </div>
-
-            <div class="status">
-                <p><strong>Status:</strong> Sprint 0 - Infrastructure Complete ✓</p>
-                <p><strong>Next:</strong> PokeAPI integration coming in Sprint 1</p>
-            </div>
+        <div class="home-cards">
+            <a href="{{ path('app_pokemon_list') }}" class="home-card">
+                <span class="home-card-icon">🔍</span>
+                <h2>Pārlūkot Pokémonus</h2>
+                <p>Apskati visu Pokémonu sarakstu ar meklēšanu un filtru palīdzību</p>
+            </a>
+            <a href="{{ path('app_favorites_index') }}" class="home-card">
+                <span class="home-card-icon">☆</span>
+                <h2>Mani favorīti</h2>
+                <p>Skatīt un pārvaldīt savus saglabātos favorītus</p>
+            </a>
         </div>
     </main>
 

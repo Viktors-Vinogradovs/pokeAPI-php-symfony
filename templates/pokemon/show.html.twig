@@ -1,23 +1,23 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ pokemon.name|capitalize }} - Pokemon Finder{% endblock %}
+{% block title %}{{ pokemon.name|pokemon_lv|capitalize }} - Pokémonu meklētājs{% endblock %}
 
 {% block body %}
 <div class="container">
     <div class="detail-back">
-        <a href="{{ path('app_pokemon_list') }}">&larr; Back to list</a>
+        <a href="{{ path('app_pokemon_list') }}">&larr; Atpakaļ uz sarakstu</a>
     </div>
 
     <div class="detail-page">
         <div class="detail-header">
             {% if pokemon.sprite %}
-                <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" class="detail-sprite">
+                <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name|pokemon_lv|capitalize }}" class="detail-sprite">
             {% else %}
                 <div class="detail-sprite-placeholder">No Image</div>
             {% endif %}
 
             <div class="detail-title">
-                <h1>{{ pokemon.name|capitalize }}</h1>
+                <h1>{{ pokemon.name|pokemon_lv|capitalize }}</h1>
                 <p class="detail-id">#{{ pokemon.id }}</p>
 
                 <div class="detail-types">
@@ -31,9 +31,9 @@
                     <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}">
                     <button type="submit" class="detail-favorite-btn {% if isFavorite %}is-favorite{% endif %}">
                         {% if isFavorite %}
-                            ★ Remove from Favorites
+                            ★ Noņemt no favorītiem
                         {% else %}
-                            ☆ Add to Favorites
+                            ☆ Pievienot favorītiem
                         {% endif %}
                     </button>
                 </form>
@@ -42,7 +42,7 @@
 
         <div class="detail-body">
             <section class="detail-section">
-                <h2>Base Stats</h2>
+                <h2>Pamatstatistika</h2>
                 <div class="stats-grid">
                     {% for statName, statValue in pokemon.stats %}
                         <div class="stat-item">
@@ -57,7 +57,7 @@
             </section>
 
             <section class="detail-section">
-                <h2>Abilities</h2>
+                <h2>Spējas</h2>
                 <div class="abilities-list">
                     {% for ability in pokemon.abilities %}
                         <span class="ability-tag">{{ ability|replace({'-': ' '})|title }}</span>
