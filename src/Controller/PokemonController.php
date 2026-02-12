@@ -7,6 +7,8 @@ use App\Service\PokeApiClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 class PokemonController extends AbstractController
@@ -14,8 +16,10 @@ class PokemonController extends AbstractController
     private const PER_PAGE = 20;
 
     #[Route('/pokemon', name: 'app_pokemon_list', methods: ['GET'])]
-    public function list(Request $request, PokeApiClient $client): Response
+    public function list(Request $request, PokeApiClient $client, SessionInterface $session): Response
     {
+        $favorites = $session->get('favorites', []);
+
         try {
             // Extract query parameters
             $searchTerm = trim(strtolower($request->query->get('q', '')));
@@ -92,6 +96,8 @@ class PokemonController extends AbstractController
                 'totalCount' => $totalCount,
                 'perPage' => self::PER_PAGE,
                 'hasResults' => !empty($pokemonDetails),
+                'favorites' => $favorites,
+                'favoritesCount' => count($favorites),
             ]);
         } catch (PokeApiException $e) {
             return $this->render('pokemon/list.html.twig', [
@@ -105,7 +111,32 @@ class PokemonController extends AbstractController
                 'totalCount' => 0,
                 'perPage' => self::PER_PAGE,
                 'hasResults' => false,
+                'favorites' => $favorites,
+                'favoritesCount' => count($favorites),
             ]);
         }
+    }
+
+    #[Route('/pokemon/{name}', name: 'app_pokemon_show', methods: ['GET'])]
+    public function show(string $name, PokeApiClient $client, SessionInterface $session): Response
+    {
+        $favorites = $session->get('favorites', []);
+
+        try {
+            $details = $client->getPokemonDetails($name);
+        } catch (PokeApiException $e) {
+            throw new NotFoundHttpException('Unable to load Pokemon data.');
+        }
+
+        if ($details === null) {
+            throw new NotFoundHttpException("Pokemon '{$name}' not found.");
+        }
+
+        return $this->render('pokemon/show.html.twig', [
+            'pokemon' => $details,
+            'isFavorite' => in_array($name, $favorites),
+            'favorites' => $favorites,
+            'favoritesCount' => count($favorites),
+        ]);
     }
 }

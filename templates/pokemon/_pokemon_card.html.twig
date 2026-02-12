@@ -1,0 +1,29 @@
+{# Reusable Pokemon card component
+   Required variables: pokemon (array), favorites (array)
+#}
+<div class="pokemon-card-wrapper">
+    <a href="{{ path('app_pokemon_show', {name: pokemon.name}) }}" class="pokemon-card">
+        {% if pokemon.sprite %}
+            <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" class="pokemon-sprite" loading="lazy">
+        {% else %}
+            <div class="pokemon-sprite-placeholder">No Image</div>
+        {% endif %}
+
+        <h3 class="pokemon-name">{{ pokemon.name|capitalize }}</h3>
+        <p class="pokemon-id">#{{ pokemon.id }}</p>
+
+        <div class="pokemon-types">
+            {% for type in pokemon.types %}
+                <span class="type-badge type-{{ type }}">{{ type }}</span>
+            {% endfor %}
+        </div>
+    </a>
+
+    <form method="post" action="{{ path('app_favorites_toggle') }}" class="favorite-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('fav_' ~ pokemon.name) }}">
+        <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}">
+        <button type="submit" class="favorite-btn {% if pokemon.name in favorites %}is-favorite{% endif %}" title="{% if pokemon.name in favorites %}Remove from favorites{% else %}Add to favorites{% endif %}">
+            {% if pokemon.name in favorites %}★{% else %}☆{% endif %}
+        </button>
+    </form>
+</div>

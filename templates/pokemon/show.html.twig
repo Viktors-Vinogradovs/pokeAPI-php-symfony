@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pokemon.name|capitalize }} - Pokemon Finder{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="detail-back">
+        <a href="{{ path('app_pokemon_list') }}">&larr; Back to list</a>
+    </div>
+
+    <div class="detail-page">
+        <div class="detail-header">
+            {% if pokemon.sprite %}
+                <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" class="detail-sprite">
+            {% else %}
+                <div class="detail-sprite-placeholder">No Image</div>
+            {% endif %}
+
+            <div class="detail-title">
+                <h1>{{ pokemon.name|capitalize }}</h1>
+                <p class="detail-id">#{{ pokemon.id }}</p>
+
+                <div class="detail-types">
+                    {% for type in pokemon.types %}
+                        <span class="type-badge type-{{ type }}">{{ type }}</span>
+                    {% endfor %}
+                </div>
+
+                <form method="post" action="{{ path('app_favorites_toggle') }}" class="detail-favorite-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('fav_' ~ pokemon.name) }}">
+                    <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}">
+                    <button type="submit" class="detail-favorite-btn {% if isFavorite %}is-favorite{% endif %}">
+                        {% if isFavorite %}
+                            ★ Remove from Favorites
+                        {% else %}
+                            ☆ Add to Favorites
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="detail-body">
+            <section class="detail-section">
+                <h2>Base Stats</h2>
+                <div class="stats-grid">
+                    {% for statName, statValue in pokemon.stats %}
+                        <div class="stat-item">
+                            <span class="stat-name">{{ statName|replace({'-': ' '})|title }}</span>
+                            <div class="stat-bar-track">
+                                <div class="stat-bar-fill" style="width: {{ min(statValue / 255 * 100, 100) }}%"></div>
+                            </div>
+                            <span class="stat-value">{{ statValue }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="detail-section">
+                <h2>Abilities</h2>
+                <div class="abilities-list">
+                    {% for ability in pokemon.abilities %}
+                        <span class="ability-tag">{{ ability|replace({'-': ' '})|title }}</span>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
