@@ -98,22 +98,7 @@
                     {# Pokemon Grid #}
                     <div class="pokemon-grid">
                         {% for pokemon in pokemonList %}
-                            <a href="{{ path('app_pokemon_list') }}?q={{ pokemon.name }}" class="pokemon-card">
-                                {% if pokemon.sprite %}
-                                    <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" class="pokemon-sprite">
-                                {% else %}
-                                    <div class="pokemon-sprite-placeholder">No Image</div>
-                                {% endif %}
-
-                                <h3 class="pokemon-name">{{ pokemon.name|capitalize }}</h3>
-                                <p class="pokemon-id">#{{ pokemon.id }}</p>
-
-                                <div class="pokemon-types">
-                                    {% for type in pokemon.types %}
-                                        <span class="type-badge type-{{ type }}">{{ type }}</span>
-                                    {% endfor %}
-                                </div>
-                            </a>
+                            {{ include('pokemon/_pokemon_card.html.twig', {pokemon: pokemon, favorites: favorites}) }}
                         {% endfor %}
                     </div>
 

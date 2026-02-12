@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Favorites - Pokemon Finder{% endblock %}
+
+{% block body %}
+<div class="container">
+    <header class="page-header">
+        <h1>My Favorites</h1>
+        <p class="subtitle">
+            {% if pokemonList|length > 0 %}
+                {{ pokemonList|length }} Pokemon saved
+            {% else %}
+                No favorites yet
+            {% endif %}
+        </p>
+    </header>
+
+    <main>
+        {% if pokemonList|length > 0 %}
+            <div class="pokemon-grid">
+                {% for pokemon in pokemonList %}
+                    {{ include('pokemon/_pokemon_card.html.twig', {pokemon: pokemon, favorites: favorites}) }}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h2>☆ No Favorites Yet</h2>
+                <p>You haven't added any Pokemon to your favorites.</p>
+                <p>Browse the Pokemon list and click the star to add favorites!</p>
+                <a href="{{ path('app_pokemon_list') }}" class="button-primary">Browse Pokemon</a>
+            </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
