@@ -8,7 +8,8 @@
         <a href="{{ path('app_pokemon_list') }}">&larr; Atpakaļ uz sarakstu</a>
     </div>
 
-    <div class="detail-page">
+    <div class="detail-card">
+        <div class="detail-card-inner">
         <div class="detail-header">
             {% if pokemon.sprite %}
                 <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name|pokemon_lv|capitalize }}" class="detail-sprite">
@@ -22,7 +23,7 @@
 
                 <div class="detail-types">
                     {% for type in pokemon.types %}
-                        <span class="type-badge type-{{ type }}">{{ type }}</span>
+                        <span class="type-badge type-{{ type }}">{{ type|type_lv|upper }}</span>
                     {% endfor %}
                 </div>
 
@@ -44,9 +45,17 @@
             <section class="detail-section">
                 <h2>Pamatstatistika</h2>
                 <div class="stats-grid">
+                    {% set statLabels = {
+                        'hp': 'HP',
+                        'attack': 'Uzbrukums',
+                        'defense': 'Aizsardzība',
+                        'special-attack': 'Spec. uzbrukums',
+                        'special-defense': 'Spec. aizsardzība',
+                        'speed': 'Ātrums'
+                    } %}
                     {% for statName, statValue in pokemon.stats %}
                         <div class="stat-item">
-                            <span class="stat-name">{{ statName|replace({'-': ' '})|title }}</span>
+                            <span class="stat-name">{{ statLabels[statName] ?? statName|replace({'-': ' '})|title }}</span>
                             <div class="stat-bar-track">
                                 <div class="stat-bar-fill" style="width: {{ min(statValue / 255 * 100, 100) }}%"></div>
                             </div>
@@ -64,6 +73,7 @@
                     {% endfor %}
                 </div>
             </section>
+        </div>
         </div>
     </div>
 </div>

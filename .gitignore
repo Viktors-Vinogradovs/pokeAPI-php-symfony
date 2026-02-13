@@ -29,6 +29,7 @@
 *.swp
 *.swo
 *~
+*.local.json
 
 ###> OS ###
 .DS_Store

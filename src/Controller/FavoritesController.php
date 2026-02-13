@@ -3,20 +3,22 @@
 namespace App\Controller;
 
 use App\Exception\PokeApiException;
+use App\Repository\FavoriteRepository;
+use App\Service\ClientIdResolver;
 use App\Service\PokeApiClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 class FavoritesController extends AbstractController
 {
     #[Route('/favorites', name: 'app_favorites_index', methods: ['GET'])]
-    public function index(SessionInterface $session, PokeApiClient $client): Response
+    public function index(Request $request, PokeApiClient $client, ClientIdResolver $clientIdResolver, FavoriteRepository $favoriteRepo): Response
     {
-        $favorites = $session->get('favorites', []);
+        $clientId = $clientIdResolver->getClientId($request);
+        $favorites = $favoriteRepo->findNamesByClientId($clientId);
 
         $pokemonDetails = [];
         foreach ($favorites as $name) {
@@ -30,15 +32,21 @@ class FavoritesController extends AbstractController
             }
         }
 
-        return $this->render('favorites/index.html.twig', [
+        $response = $this->render('favorites/index.html.twig', [
             'pokemonList' => $pokemonDetails,
             'favorites' => $favorites,
             'favoritesCount' => count($favorites),
         ]);
+
+        if (!$clientIdResolver->hasClientIdCookie($request)) {
+            $clientIdResolver->ensureClientIdCookie($response, $clientId);
+        }
+
+        return $response;
     }
 
     #[Route('/favorites/toggle', name: 'app_favorites_toggle', methods: ['POST'])]
-    public function toggle(Request $request, SessionInterface $session): Response
+    public function toggle(Request $request, ClientIdResolver $clientIdResolver, FavoriteRepository $favoriteRepo): Response
     {
         $name = strtolower(trim($request->request->get('pokemon_name', '')));
         $token = $request->request->get('_token', '');
@@ -48,30 +56,29 @@ class FavoritesController extends AbstractController
             throw new AccessDeniedHttpException('Invalid CSRF token.');
         }
 
+        $clientId = $clientIdResolver->getClientId($request);
+
         if (!empty($name)) {
-            $favorites = $session->get('favorites', []);
+            $favorites = $favoriteRepo->findNamesByClientId($clientId);
 
-            $key = array_search($name, $favorites);
-            if ($key !== false) {
-                // Remove from favorites
-                unset($favorites[$key]);
-                $favorites = array_values($favorites); // Re-index
+            if (in_array($name, $favorites)) {
+                $favoriteRepo->remove($clientId, $name);
             } else {
-                // Add to favorites (avoid duplicates)
-                if (!in_array($name, $favorites)) {
-                    $favorites[] = $name;
-                }
+                $favoriteRepo->add($clientId, $name);
             }
-
-            $session->set('favorites', $favorites);
         }
 
         // Redirect back to referer, or to favorites page
         $referer = $request->headers->get('referer');
-        if ($referer) {
-            return $this->redirect($referer);
+
+        $response = $referer
+            ? $this->redirect($referer)
+            : $this->redirectToRoute('app_favorites_index');
+
+        if (!$clientIdResolver->hasClientIdCookie($request)) {
+            $clientIdResolver->ensureClientIdCookie($response, $clientId);
         }
 
-        return $this->redirectToRoute('app_favorites_index');
+        return $response;
     }
 }
