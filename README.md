@@ -62,8 +62,32 @@ docker compose exec php bin/console doctrine:migrations:status
 docker compose down -v
 docker compose up --build
 ```
+## Architecture
 
-The `-v` flag removes all named volumes, including the PostgreSQL data volume. Migrations will re-run on next startup.
+### Request Flow
+
+```mermaid
+flowchart TD
+  B[Browser] --> W[Caddy / FrankenPHP]
+  W --> R{Symfony Router}
+
+  R --> C[Controller]
+  C --> ID[ClientIdResolver]
+  ID -->|read/set client_id cookie| B
+
+  C -->|favorites| DB[FavoriteRepository]
+  DB --> PG[(PostgreSQL)]
+
+  C -->|pokemon data| P[PokeApiClient]
+  P --> Cache[(Symfony Cache)]
+  P --> API[(PokeAPI v2)]
+
+  C --> T[Twig Templates]
+  T -->|HTML response| B
+
+```
+
+
 
 ### Cache Management
 
@@ -74,87 +98,6 @@ docker compose exec php bin/console cache:clear
 # Warm up cache
 docker compose exec php bin/console cache:warmup
 ```
-
-## Architecture
-
-### Request Flow
-
-```mermaid
-flowchart TD
-    Browser([Browser])
-    Caddy[Caddy / FrankenPHP :80]
-    Router{Symfony Router}
-    Home[HomeController]
-    Pokemon[PokemonController]
-    Favs[FavoritesController]
-    Health[HealthController]
-    ClientId[ClientIdResolver]
-    FavRepo[FavoriteRepository]
-    PokeAPI[PokeApiClient]
-    Twig[Twig Templates]
-    PG[(PostgreSQL)]
-    API([PokeAPI v2])
-    Cache[(Symfony Cache)]
-
-    Browser -- "HTTP request" --> Caddy
-    Caddy --> Router
-
-    Router -- "GET /" --> Home
-    Router -- "GET /pokemon{/name}" --> Pokemon
-    Router -- "GET /favorites\nPOST /favorites/toggle" --> Favs
-    Router -- "GET /health" --> Health
-
-    Home --> ClientId
-    Pokemon --> ClientId
-    Favs --> ClientId
-    ClientId -- "read/set client_id cookie" --> Browser
-
-    Home --> FavRepo
-    Pokemon --> FavRepo
-    Pokemon --> PokeAPI
-    Favs --> FavRepo
-    Favs --> PokeAPI
-
-    FavRepo -- "Doctrine ORM" --> PG
-    PokeAPI -- "HTTP GET (cached)" --> API
-    PokeAPI -- "read/write" --> Cache
-
-    Home --> Twig
-    Pokemon --> Twig
-    Favs --> Twig
-    Twig -- "HTML response" --> Browser
-```
-
-### Favorite Toggle Sequence
-
-```mermaid
-sequenceDiagram
-    actor B as Browser
-    participant C as FavoritesController
-    participant ID as ClientIdResolver
-    participant R as FavoriteRepository
-    participant DB as PostgreSQL
-
-    B->>C: POST /favorites/toggle (name + CSRF token)
-    C->>C: Validate CSRF token
-    C->>ID: getClientId(request)
-    ID-->>C: client_id (from cookie or new UUID)
-    C->>R: findNamesByClientId(clientId)
-    R->>DB: SELECT pokemon_name
-    DB-->>R: [names]
-    R-->>C: favorites list
-
-    alt name in favorites
-        C->>R: remove(clientId, name)
-        R->>DB: DELETE FROM favorites
-    else name not in favorites
-        C->>R: add(clientId, name)
-        R->>DB: INSERT INTO favorites
-    end
-
-    C-->>B: 302 Redirect + Set-Cookie (if new client)
-```
-
 ## Favorites System
 
 Favorites are persisted in PostgreSQL using an anonymous cookie-based system:
