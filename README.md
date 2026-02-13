@@ -17,26 +17,6 @@ A Symfony web application for browsing, searching, and managing favorite Pokemon
 - **Docker Desktop** for Windows installed and running
 - **Git** for version control
 
-## Quick Start
-
-### 1. Clone the Repository
-```powershell
-git clone https://github.com/Viktors-Vinogradovs/pokeAPI-php-symfony.git 
-cd pokeAPI-php-symfony
-```
-
-### 2. Start the Application
-```powershell
-docker compose up --build
-```
-
-Wait for the message: **"PHP app ready!"**
-
-On first start, the container will:
-1. Install Composer dependencies (including Doctrine ORM)
-2. Wait for PostgreSQL to be ready
-3. Automatically run database migrations
-
 ## Architecture
 
 ### Request Flow
@@ -61,6 +41,26 @@ flowchart TD
   T -->|HTML response| B
 
 ```
+
+## Quick Start
+
+### 1. Clone the Repository
+```powershell
+git clone https://github.com/Viktors-Vinogradovs/pokeAPI-php-symfony.git 
+cd pokeAPI-php-symfony
+```
+
+### 2. Start the Application
+```powershell
+docker compose up --build
+```
+
+Wait for the message: **"PHP app ready!"**
+
+On first start, the container will:
+1. Install Composer dependencies (including Doctrine ORM)
+2. Wait for PostgreSQL to be ready
+3. Automatically run database migrations
 
 ### 3. Access the Application
 
