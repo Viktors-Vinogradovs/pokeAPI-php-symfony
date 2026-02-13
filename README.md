@@ -37,31 +37,6 @@ On first start, the container will:
 2. Wait for PostgreSQL to be ready
 3. Automatically run database migrations
 
-### 3. Access the Application
-
-- **Home Page**: http://localhost:8000
-
-To stop the application, press `Ctrl+C` in the terminal.
-
-## Database
-
-PostgreSQL 16 is included in the Docker Compose setup. Data is persisted in a named Docker volume (`database_data`).
-
-### Run Migrations
-```powershell
-docker compose exec php bin/console doctrine:migrations:migrate --no-interaction
-```
-
-### Check Migration Status
-```powershell
-docker compose exec php bin/console doctrine:migrations:status
-```
-
-### Reset Database (removes all data)
-```powershell
-docker compose down -v
-docker compose up --build
-```
 ## Architecture
 
 ### Request Flow
@@ -87,7 +62,31 @@ flowchart TD
 
 ```
 
+### 3. Access the Application
 
+- **Home Page**: http://localhost:8000
+
+To stop the application, press `Ctrl+C` in the terminal.
+
+## Database
+
+PostgreSQL 16 is included in the Docker Compose setup. Data is persisted in a named Docker volume (`database_data`).
+
+### Run Migrations
+```powershell
+docker compose exec php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+### Check Migration Status
+```powershell
+docker compose exec php bin/console doctrine:migrations:status
+```
+
+### Reset Database (removes all data)
+```powershell
+docker compose down -v
+docker compose up --build
+```
 
 ### Cache Management
 
