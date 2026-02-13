@@ -1,7 +1,8 @@
 {# Reusable Pokemon card component
    Required variables: pokemon (array), favorites (array)
+   Optional: variant ('default'|'large')
 #}
-<div class="pokemon-card-wrapper">
+<div class="pokemon-card-wrapper {{ (variant ?? 'default') == 'large' ? 'pokemon-card-wrapper--large' : '' }}">
     <a href="{{ path('app_pokemon_show', {name: pokemon.name}) }}" class="pokemon-card">
         {% if pokemon.sprite %}
             <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name|pokemon_lv|capitalize }}" class="pokemon-sprite" loading="lazy">
@@ -14,7 +15,7 @@
 
         <div class="pokemon-types">
             {% for type in pokemon.types %}
-                <span class="type-badge type-{{ type }}">{{ type }}</span>
+                <span class="type-badge type-{{ type }}">{{ type|type_lv|upper }}</span>
             {% endfor %}
         </div>
     </a>
@@ -22,8 +23,11 @@
     <form method="post" action="{{ path('app_favorites_toggle') }}" class="favorite-form">
         <input type="hidden" name="_token" value="{{ csrf_token('fav_' ~ pokemon.name) }}">
         <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}">
-        <button type="submit" class="favorite-btn {% if pokemon.name in favorites %}is-favorite{% endif %}" title="{% if pokemon.name in favorites %}Noņemt no favorītiem{% else %}Pievienot favorītiem{% endif %}">
-            {% if pokemon.name in favorites %}★{% else %}☆{% endif %}
-        </button>
+        <div class="fav-btn-wrapper">
+            <button type="submit" class="favorite-btn {% if pokemon.name in favorites %}is-favorite{% endif %}" aria-label="{% if pokemon.name in favorites %}Noņemt no favorītiem{% else %}Pievienot favorītiem{% endif %}">
+                {% if pokemon.name in favorites %}★{% else %}☆{% endif %}
+            </button>
+            <span class="fav-tooltip">{% if pokemon.name in favorites %}Noņemt no favorītiem{% else %}Pievienot favorītiem{% endif %}</span>
+        </div>
     </form>
 </div>

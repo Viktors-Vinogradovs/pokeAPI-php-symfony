@@ -2,21 +2,13 @@
 
 A Symfony web application for browsing, searching, and managing favorite Pokemon using the PokeAPI v2.
 
-## Project Status
-
-**Sprint 0 Complete ✓** - Infrastructure and Docker setup ready
-
-- ✅ Docker Compose configuration
-- ✅ Symfony 8 skeleton with Twig templating
-- ✅ Home page with basic styling
-- ✅ Health check endpoint
-- 🔄 Next: PokeAPI integration (Sprint 1)
-
 ## Tech Stack
 
 - **PHP 8.4** with FrankenPHP runtime
 - **Symfony 8.0** (MVC architecture)
 - **Twig** for server-side rendering
+- **PostgreSQL 16** for persistent favorites storage
+- **Doctrine ORM** for database access
 - **Caddy** web server (via FrankenPHP)
 - **Docker Compose** for containerization
 
@@ -24,19 +16,12 @@ A Symfony web application for browsing, searching, and managing favorite Pokemon
 
 - **Docker Desktop** for Windows installed and running
 - **Git** for version control
-- **Windows 11** with PowerShell
-
-Verify Docker is running:
-```powershell
-docker --version
-docker compose version
-```
 
 ## Quick Start
 
 ### 1. Clone the Repository
 ```powershell
-git clone <your-repo-url> pokeAPI-php-symfony
+git clone https://github.com/Viktors-Vinogradovs/pokeAPI-php-symfony.git 
 cd pokeAPI-php-symfony
 ```
 
@@ -45,71 +30,40 @@ cd pokeAPI-php-symfony
 docker compose up --build
 ```
 
-Wait for the message: **"FrankenPHP started 🐘"**
+Wait for the message: **"PHP app ready!"**
+
+On first start, the container will:
+1. Install Composer dependencies (including Doctrine ORM)
+2. Wait for PostgreSQL to be ready
+3. Automatically run database migrations
 
 ### 3. Access the Application
 
 - **Home Page**: http://localhost:8000
-- **Health Check**: http://localhost:8000/health
 
 To stop the application, press `Ctrl+C` in the terminal.
 
-## Common Commands
+## Database
 
-### Start/Stop/Restart
+PostgreSQL 16 is included in the Docker Compose setup. Data is persisted in a named Docker volume (`database_data`).
 
+### Run Migrations
 ```powershell
-# Start containers (detached mode)
-docker compose up -d
-
-# Start with rebuild
-docker compose up --build -d
-
-# Stop containers
-docker compose down
-
-# Restart containers
-docker compose restart
-
-# View container status
-docker compose ps
+docker compose exec php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-### View Logs
-
+### Check Migration Status
 ```powershell
-# All logs
-docker compose logs
-
-# Follow logs (live tail)
-docker compose logs -f
-
-# Logs for specific service only
-docker compose logs -f php
-
-# Last 50 lines
-docker compose logs --tail=50 php
+docker compose exec php bin/console doctrine:migrations:status
 ```
 
-### Execute Commands Inside Container
-
+### Reset Database (removes all data)
 ```powershell
-# Open shell in container
-docker compose exec php sh
-
-# Run Composer commands
-docker compose exec php composer install
-docker compose exec php composer require <package-name>
-docker compose exec php composer update
-
-# Run Symfony console commands
-docker compose exec php bin/console cache:clear
-docker compose exec php bin/console debug:router
-docker compose exec php bin/console list
-
-# Check Symfony version
-docker compose exec php bin/console --version
+docker compose down -v
+docker compose up --build
 ```
+
+The `-v` flag removes all named volumes, including the PostgreSQL data volume. Migrations will re-run on next startup.
 
 ### Cache Management
 
@@ -121,50 +75,116 @@ docker compose exec php bin/console cache:clear
 docker compose exec php bin/console cache:warmup
 ```
 
-## Project Structure
+## Architecture
 
+### Request Flow
+
+```mermaid
+flowchart TD
+    Browser([Browser])
+    Caddy[Caddy / FrankenPHP :80]
+    Router{Symfony Router}
+    Home[HomeController]
+    Pokemon[PokemonController]
+    Favs[FavoritesController]
+    Health[HealthController]
+    ClientId[ClientIdResolver]
+    FavRepo[FavoriteRepository]
+    PokeAPI[PokeApiClient]
+    Twig[Twig Templates]
+    PG[(PostgreSQL)]
+    API([PokeAPI v2])
+    Cache[(Symfony Cache)]
+
+    Browser -- "HTTP request" --> Caddy
+    Caddy --> Router
+
+    Router -- "GET /" --> Home
+    Router -- "GET /pokemon{/name}" --> Pokemon
+    Router -- "GET /favorites\nPOST /favorites/toggle" --> Favs
+    Router -- "GET /health" --> Health
+
+    Home --> ClientId
+    Pokemon --> ClientId
+    Favs --> ClientId
+    ClientId -- "read/set client_id cookie" --> Browser
+
+    Home --> FavRepo
+    Pokemon --> FavRepo
+    Pokemon --> PokeAPI
+    Favs --> FavRepo
+    Favs --> PokeAPI
+
+    FavRepo -- "Doctrine ORM" --> PG
+    PokeAPI -- "HTTP GET (cached)" --> API
+    PokeAPI -- "read/write" --> Cache
+
+    Home --> Twig
+    Pokemon --> Twig
+    Favs --> Twig
+    Twig -- "HTML response" --> Browser
 ```
-pokeAPI-php-symfony/
-├── bin/
-│   └── console                 # Symfony CLI
-├── config/                     # Symfony configuration
-├── frankenphp/
-│   ├── Caddyfile              # Web server config
-│   └── docker-entrypoint.sh   # Container startup script
-├── public/
-│   ├── index.php              # Application entry point
-│   └── styles.css             # Basic CSS
-├── src/
-│   ├── Controller/            # Application controllers
-│   │   ├── HomeController.php
-│   │   └── HealthController.php
-│   └── Kernel.php
-├── templates/
-│   ├── base.html.twig         # Base layout
-│   └── home/
-│       └── index.html.twig    # Home page template
-├── var/                       # Cache, logs (auto-generated)
-├── vendor/                    # Composer dependencies (ignored by git)
-├── .env                       # Environment config
-├── .gitignore
-├── compose.yaml               # Docker Compose config
-├── composer.json              # PHP dependencies
-├── Dockerfile
-└── README.md
+
+### Favorite Toggle Sequence
+
+```mermaid
+sequenceDiagram
+    actor B as Browser
+    participant C as FavoritesController
+    participant ID as ClientIdResolver
+    participant R as FavoriteRepository
+    participant DB as PostgreSQL
+
+    B->>C: POST /favorites/toggle (name + CSRF token)
+    C->>C: Validate CSRF token
+    C->>ID: getClientId(request)
+    ID-->>C: client_id (from cookie or new UUID)
+    C->>R: findNamesByClientId(clientId)
+    R->>DB: SELECT pokemon_name
+    DB-->>R: [names]
+    R-->>C: favorites list
+
+    alt name in favorites
+        C->>R: remove(clientId, name)
+        R->>DB: DELETE FROM favorites
+    else name not in favorites
+        C->>R: add(clientId, name)
+        R->>DB: INSERT INTO favorites
+    end
+
+    C-->>B: 302 Redirect + Set-Cookie (if new client)
 ```
+
+## Favorites System
+
+Favorites are persisted in PostgreSQL using an anonymous cookie-based system:
+- On first visit, a `client_id` cookie (UUID v4) is set in the browser
+- Favorites are stored per `client_id` in the `favorites` table
+- Favorites survive browser restarts and server restarts
+- CSRF protection on all toggle actions
 
 ## Troubleshooting
 
 ### Port 8000 Already in Use
 
-If port 8000 is occupied by another application:
+Change the port in `.env`:
+```
+HTTP_PORT=8080
+```
+Then restart: `docker compose down && docker compose up -d`
 
-1. **Option A**: Stop the other application
-2. **Option B**: Change the port in `.env`:
-   ```
-   HTTP_PORT=8080
-   ```
-   Then restart: `docker compose down && docker compose up -d`
+### Database Connection Issues
+
+```powershell
+# Check if database is running
+docker compose ps database
+
+# View database logs
+docker compose logs database
+
+# Verify connection from PHP container
+docker compose exec php bin/console dbal:run-sql "SELECT 1"
+```
 
 ### Container Won't Start
 
@@ -180,77 +200,11 @@ docker compose down
 docker compose up --build --force-recreate
 ```
 
-### "Composer not found" or "PHP not found"
-
-These tools run **inside the container**, not on your host machine. Always prefix with:
-```powershell
-docker compose exec php <command>
-```
-
-### Symfony Cache Issues
+### Reset Everything (clean slate)
 
 ```powershell
-# Clear cache and restart
-docker compose exec php bin/console cache:clear
-docker compose restart
-```
-
-### Permission Errors (Rare on Windows)
-
-If you encounter permission issues with `var/` directory:
-```powershell
-docker compose exec php chmod -R 777 var/
-```
-
-## Available Routes
-
-View all routes:
-```powershell
-docker compose exec php bin/console debug:router
-```
-
-Current routes:
-- `GET /` - Home page (renders Twig template)
-- `GET /health` - Health check (returns "OK")
-
-## Development Workflow
-
-### Adding a New Controller
-
-1. Create controller file in `src/Controller/`:
-   ```php
-   <?php
-   namespace App\Controller;
-
-   use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-   use Symfony\Component\HttpFoundation\Response;
-   use Symfony\Component\Routing\Attribute\Route;
-
-   class MyController extends AbstractController
-   {
-       #[Route('/my-route', name: 'app_my_route')]
-       public function index(): Response
-       {
-           return $this->render('my_template.html.twig');
-       }
-   }
-   ```
-
-2. Clear cache:
-   ```powershell
-   docker compose exec php bin/console cache:clear
-   ```
-
-3. Test the route: http://localhost:8000/my-route
-
-### Installing Packages
-
-```powershell
-# Example: Install HTTP Client for PokeAPI
-docker compose exec php composer require symfony/http-client
-
-# Example: Install database support
-docker compose exec php composer require symfony/orm-pack
+docker compose down -v
+docker compose up --build
 ```
 
 ## Environment Configuration
@@ -260,54 +214,20 @@ Edit `.env` file to configure:
 - `SERVER_NAME` - Server name (default: localhost)
 - `APP_ENV` - Application environment (dev/prod)
 - `APP_SECRET` - Application secret key
+- `DATABASE_URL` - PostgreSQL connection string
 
-**Important**: Never commit `.env` with sensitive data. Use `.env.local` for local overrides (already gitignored).
-
-## Git Workflow
+## Available Routes
 
 ```powershell
-# Initialize repository (if not already done)
-git init
-git add .
-git commit -m "Sprint 0: Initial Symfony + Docker setup"
-
-# Push to remote
-git remote add origin <your-repo-url>
-git push -u origin main
+docker compose exec php bin/console debug:router
 ```
 
-## What's Ignored by Git
-
-The `.gitignore` file excludes:
-- `vendor/` - Composer dependencies (regenerated via `composer install`)
-- `var/` - Cache and logs
-- `.env.local` - Local environment overrides
-- IDE files (`.idea/`, `.vscode/`)
-
-## Next Steps (Sprint 1+)
-
-- [ ] Install Symfony HTTP Client
-- [ ] Create `PokeApiClient` service
-- [ ] Implement Pokemon list page with search
-- [ ] Add type filtering
-- [ ] Create Pokemon details page
-- [ ] Implement favorites functionality
-- [ ] Add pagination
-
-## Resources
-
-- [Symfony Documentation](https://symfony.com/doc/current/index.html)
-- [PokeAPI v2 Docs](https://pokeapi.co/docs/v2)
-- [Twig Documentation](https://twig.symfony.com/)
-- [Docker Compose Reference](https://docs.docker.com/compose/)
-
-## Support
-
-For issues related to:
-- **Symfony**: Check the [Symfony documentation](https://symfony.com/doc)
-- **Docker**: Ensure Docker Desktop is running and updated
-- **Project setup**: Review this README and troubleshooting section
+Current routes:
+- `GET /` - Home page
+- `GET /pokemon` - Pokemon list with search and filtering
+- `GET /pokemon/{name}` - Pokemon details page
+- `GET /favorites` - Favorites page (carousel view)
+- `POST /favorites/toggle` - Toggle favorite (CSRF protected)
+- `GET /health` - Health check
 
 ---
-
-**Built with ❤️ using Symfony and PokeAPI**

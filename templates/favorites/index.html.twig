@@ -2,6 +2,10 @@
 
 {% block title %}Mani favorīti - Pokémonu meklētājs{% endblock %}
 
+{% block javascripts %}
+    <script src="{{ asset('carousel.js') }}"></script>
+{% endblock %}
+
 {% block body %}
 <div class="container">
     <header class="page-header">
@@ -17,10 +21,21 @@
 
     <main>
         {% if pokemonList|length > 0 %}
-            <div class="pokemon-grid">
-                {% for pokemon in pokemonList %}
-                    {{ include('pokemon/_pokemon_card.html.twig', {pokemon: pokemon, favorites: favorites}) }}
-                {% endfor %}
+            <div class="favorites-carousel">
+                <div class="carousel-controls">
+                    <button type="button" class="carousel-prev" aria-label="Iepriekšējais">← Iepriekšējais</button>
+                    <span class="carousel-index">1 / {{ pokemonList|length }}</span>
+                    <button type="button" class="carousel-next" aria-label="Nākamais">Nākamais →</button>
+                </div>
+                <div class="carousel-viewport">
+                    <div class="carousel-track">
+                        {% for pokemon in pokemonList %}
+                            <div class="carousel-slide">
+                                {{ include('pokemon/_pokemon_card.html.twig', {pokemon: pokemon, favorites: favorites, variant: 'large'}) }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         {% else %}
             <div class="empty-state">

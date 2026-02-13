@@ -53,7 +53,7 @@
                                     value="{{ type }}"
                                     {% if type in selectedTypes %}checked{% endif %}
                                 >
-                                <span class="type-label">{{ type|capitalize }}</span>
+                                <span class="type-label">{{ type|type_lv }}</span>
                             </label>
                         {% endfor %}
                     </div>
@@ -79,7 +79,7 @@
                             <span class="filter-pill">Meklēt: "{{ searchTerm }}"</span>
                         {% endif %}
                         {% for type in selectedTypes %}
-                            <span class="filter-pill">Tips: {{ type|capitalize }}</span>
+                            <span class="filter-pill">Tips: {{ type|type_lv }}</span>
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -88,12 +88,6 @@
             {# Results Section #}
             <section class="results-section">
                 {% if hasResults %}
-                    <div class="results-summary">
-                        <p>
-                            Rāda {{ ((page - 1) * perPage) + 1 }}–{{ min(page * perPage, totalCount) }} no {{ totalCount }} Pokémoniem
-                        </p>
-                    </div>
-
                     {# Pokemon Grid #}
                     <div class="pokemon-grid">
                         {% for pokemon in pokemonList %}

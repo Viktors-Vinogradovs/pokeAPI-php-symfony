@@ -126,7 +126,8 @@ body.health {
 
 /* Wider container for list, favorites, and details pages */
 .container:has(.pokemon-grid),
-.container:has(.detail-page) {
+.container:has(.detail-card),
+.container:has(.favorites-carousel) {
     max-width: 1200px;
 }
 
@@ -300,20 +301,6 @@ body.health {
 /* Results Section */
 .results-section {
     margin-top: 30px;
-}
-
-.results-summary {
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #e7f3ff;
-    border-left: 4px solid #667eea;
-    border-radius: 4px;
-}
-
-.results-summary p {
-    margin: 0;
-    color: #555;
-    font-weight: 500;
 }
 
 /* Pokemon Grid */
@@ -594,18 +581,27 @@ body {
 
 .pokemon-card-wrapper .pokemon-card {
     display: block;
-    padding-bottom: 50px; /* space for favorite button */
+    padding-top: 8px;
+    padding-right: 48px;
 }
 
 .favorite-form {
     position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 12px;
+    right: 12px;
+    margin: 0;
+    padding: 0;
+    z-index: 2;
+}
+
+.fav-btn-wrapper {
+    position: relative;
+    display: block;
+    margin: 0;
 }
 
 .favorite-btn {
-    background: none;
+    background: white;
     border: 2px solid #ddd;
     border-radius: 50%;
     width: 40px;
@@ -631,6 +627,31 @@ body {
     background: #fff9e6;
 }
 
+/* Tooltip on hover/focus */
+.fav-tooltip {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    background: #333;
+    color: white;
+    font-size: 0.8em;
+    white-space: nowrap;
+    border-radius: 6px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.fav-btn-wrapper:hover .fav-tooltip,
+.fav-btn-wrapper:focus-within .fav-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* ============================================
    Details Page (Sprint 3)
    ============================================ */
@@ -652,9 +673,13 @@ body {
     text-decoration: underline;
 }
 
-.detail-page {
+.detail-card {
+    max-width: 900px;
+    margin: 40px auto;
     background: white;
-    border-radius: 12px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 30px;
 }
 
 .detail-header {
@@ -817,4 +842,134 @@ body {
     color: #4a5cc5;
     font-weight: 500;
     font-size: 0.95em;
+}
+
+/* ============================================
+   Favorites Carousel (Sprint 5B)
+   ============================================ */
+
+.favorites-carousel {
+    margin-top: 20px;
+}
+
+.carousel-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.carousel-prev,
+.carousel-next {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: 600;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    background: white;
+    color: #667eea;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.carousel-prev:hover,
+.carousel-next:hover {
+    background: #667eea;
+    color: white;
+}
+
+.carousel-prev:disabled,
+.carousel-next:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.carousel-index {
+    font-weight: 600;
+    color: #555;
+    min-width: 60px;
+    text-align: center;
+}
+
+.carousel-viewport {
+    width: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.carousel-viewport::-webkit-scrollbar {
+    height: 8px;
+}
+
+.carousel-viewport::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.carousel-viewport::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+.carousel-track {
+    display: flex;
+}
+
+.carousel-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    box-sizing: border-box;
+}
+
+/* Large card variant for favorites carousel only */
+.pokemon-card-wrapper--large .pokemon-card {
+    max-width: 520px;
+    width: 100%;
+    padding: 32px 56px 28px 28px;
+}
+
+.pokemon-card-wrapper--large .pokemon-sprite {
+    width: 240px;
+    height: 240px;
+}
+
+.pokemon-card-wrapper--large .pokemon-sprite-placeholder {
+    width: 240px;
+    height: 240px;
+}
+
+.pokemon-card-wrapper--large .pokemon-name {
+    font-size: 2.2em;
+}
+
+.pokemon-card-wrapper--large .pokemon-id {
+    font-size: 1.1em;
+}
+
+.pokemon-card-wrapper--large .pokemon-types .type-badge {
+    font-size: 0.9em;
+    padding: 6px 12px;
+}
+
+@media (max-width: 600px) {
+    .pokemon-card-wrapper--large .pokemon-card {
+        padding: 20px;
+    }
+
+    .pokemon-card-wrapper--large .pokemon-sprite,
+    .pokemon-card-wrapper--large .pokemon-sprite-placeholder {
+        width: 160px;
+        height: 160px;
+    }
+
+    .pokemon-card-wrapper--large .pokemon-name {
+        font-size: 1.5em;
+    }
 }
