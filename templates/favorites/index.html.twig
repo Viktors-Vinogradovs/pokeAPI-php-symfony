@@ -3,7 +3,9 @@
 {% block title %}Mani favorīti - Pokémonu meklētājs{% endblock %}
 
 {% block javascripts %}
-    <script src="{{ asset('carousel.js') }}"></script>
+    {% if pokemonList|length > 0 %}
+        <script src="{{ asset('carousel.js') }}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
