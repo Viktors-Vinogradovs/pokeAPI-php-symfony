@@ -21,7 +21,7 @@
 ###< symfony/phpunit-bridge ###
 
 ###> Docker ###
-/docker-compose.override.yml
+/compose.override.yaml
 
 ###> IDE ###
 .idea/

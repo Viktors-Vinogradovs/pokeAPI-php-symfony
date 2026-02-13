@@ -52,6 +52,12 @@ jobs:
       - name: Check pokemon list page
         run: curl -v --fail-with-body http://localhost:8000/pokemon
 
+      - name: Check pokemon detail page
+        run: curl -v --fail-with-body http://localhost:8000/pokemon/pikachu
+
+      - name: Check favorites page
+        run: curl -v --fail-with-body http://localhost:8000/favorites
+
       - name: Cleanup
         if: always()
         run: docker compose down -v

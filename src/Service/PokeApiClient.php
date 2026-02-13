@@ -120,6 +120,72 @@ class PokeApiClient
     }
 
     /**
+     * Get filtered and paginated Pokemon list with details.
+     *
+     * @param string $search Search term (substring match)
+     * @param array<string> $types Selected type filters
+     * @param int $page Current page number (1-indexed)
+     * @param int $perPage Items per page
+     * @return array{pokemonDetails: array, page: int, totalPages: int}
+     * @throws PokeApiException
+     */
+    public function getFilteredPokemonPage(string $search, array $types, int $page, int $perPage): array
+    {
+        $filteredMode = $search !== '' || !empty($types);
+
+        if (!$filteredMode) {
+            $offset = ($page - 1) * $perPage;
+            $pageData = $this->getPokemonPage($perPage, $offset);
+            $totalItems = (int) $pageData['count'];
+            $totalPages = $totalItems > 0 ? max(1, (int) ceil($totalItems / $perPage)) : 1;
+            $page = min($page, $totalPages);
+
+            $pokemonNames = $pageData['results'];
+        } else {
+            if (!empty($types)) {
+                $typeLists = [];
+                foreach ($types as $type) {
+                    $typeLists[] = $this->getPokemonListByType($type);
+                }
+                $baseList = count($typeLists) > 1
+                    ? array_intersect(...$typeLists)
+                    : $typeLists[0];
+            } else {
+                $pageData = $this->getPokemonPage(2000, 0);
+                $baseList = $pageData['results'];
+            }
+
+            if ($search !== '') {
+                $baseList = array_filter($baseList, function ($name) use ($search) {
+                    return str_contains(strtolower($name), $search);
+                });
+            }
+
+            $filteredNames = array_values($baseList);
+            $totalItems = count($filteredNames);
+            $totalPages = $totalItems > 0 ? max(1, (int) ceil($totalItems / $perPage)) : 1;
+            $page = min($page, $totalPages);
+
+            $offset = ($page - 1) * $perPage;
+            $pokemonNames = array_slice($filteredNames, $offset, $perPage);
+        }
+
+        $pokemonDetails = [];
+        foreach ($pokemonNames as $name) {
+            $details = $this->getPokemonDetails($name);
+            if ($details !== null) {
+                $pokemonDetails[] = $details;
+            }
+        }
+
+        return [
+            'pokemonDetails' => $pokemonDetails,
+            'page' => $page,
+            'totalPages' => $totalPages,
+        ];
+    }
+
+    /**
      * Make HTTP request to PokeAPI
      *
      * @param string $endpoint API endpoint (e.g., '/type', '/pokemon/pikachu')
@@ -139,8 +205,8 @@ class PokeApiClient
                 throw new PokeApiException("Resource not found: {$endpoint} (404)");
             }
 
-            if ($statusCode >= 500) {
-                throw new PokeApiException("PokeAPI server error (HTTP {$statusCode})");
+            if ($statusCode >= 400) {
+                throw new PokeApiException("PokeAPI error (HTTP {$statusCode})");
             }
 
             $content = $response->getContent();
